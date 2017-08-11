@@ -6,31 +6,39 @@ import (
 )
 
 type Min struct {
+	stackData, stackMin *stack.Stack
 }
 
-var stackData = stack.NewStack()
-var stackMin = stack.NewStack()
+func New() *Min {
+	stackData := stack.NewStack()
+	stackMin := stack.NewStack()
+	return &Min{stackData, stackMin}
+}
 
 func (min *Min) Pop() interface{} {
-	num := stackData.Pop()
+	if min.stackData.Empty() {
+		fmt.Println("空栈")
+	}
+	num := min.stackData.Pop()
 	if num == min.GetMin() {
-		return stackMin.Pop()
+		return min.stackMin.Pop()
 	}
 	return nil
 }
 
 func (min *Min) Push(value interface{}) {
-	if stackMin.Empty() {
-		stackMin.Push(value)
-	} else if value < min.GetMin() {
-		stackMin.Push(value)
+	if min.stackMin.Empty() {
+		min.stackMin.Push(value)
 	}
-	stackData.Push(value)
+	min.stackData.Push(value)
+	if value.(int) <= min.GetMin().(int) {
+		min.stackMin.Push(value)
+	}
 }
 
 func (min *Min) GetMin() interface{} {
-	if stackMin.Empty() {
+	if min.stackMin.Empty() {
 		fmt.Println("空栈")
 	}
-	return stackMin.Peak()
+	return min.stackMin.Peak()
 }

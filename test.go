@@ -6,6 +6,9 @@ import (
 )
 
 func main() {
-	data := get_min.Pus(1)
+	data := get_min.New()
+	data.Push(10)
+	data.Push(1)
+	data.Push(0)
 	fmt.Println(data.GetMin())
 }
