@@ -105,9 +105,15 @@ func (sudo *Sudo) Screen(key int, point [2]int, block int) {
 }
 
 func (sudo *Sudo) CheckSameNum() {
-	// for _, val := range sudo.base_points {
+	for _, val := range sudo.base_points {
+		for key, _ := range sudo.value[val[0] : val[0]+3] {
+			for i := val[1]; i < val[1]+3; i++ {
+				if sudo.value[key][i] == 0 {
 
-	// }
+				}
+			}
+		}
+	}
 }
 
 func main() {
@@ -115,6 +121,6 @@ func main() {
 	// data.Calc()
 	// fmt.Println(append(data.screen[0][:3], data.screen[0][3+2:]...))
 	// fmt.Println(data.new_points.Front().Value)
-	data.CutNum([2]int{0, 7})
-	fmt.Println(data.screen)
+	// data.CutNum([2]int{0, 7})
+	data.CheckSameNum()
 }
