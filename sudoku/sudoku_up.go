@@ -68,18 +68,39 @@ func (sudo *Sudo) CutNum(point [2]int) {
 	//行排除
 	for key, row := range sudo.value[point[0]] {
 		if row == 0 {
-			screenKey := point[0]*9 + key
-			list := sudo.screen[screenKey]
-			for k, col := range list {
-				if val == col {
-					sudo.screen[screenKey] = append(list[:k], list[k+1:]...)
-				}
-			}
-			if len(sudo.screen[screenKey]) == 1 {
-				sudo.new_points.PushFront(point)
-				sudo.value[point[0]][point[1]] = sudo.screen[screenKey][0]
+			sudo.Screen(point[0]*9+key, [2]int{point[0], key}, val)
+		}
+	}
+
+	//列排除
+	for i := 0; i < 9; i++ {
+		if sudo.value[i][point[1]] == 0 {
+			sudo.Screen(i*9+point[1], [2]int{i, point[1]}, val)
+		}
+	}
+
+	//九宫格排除
+	x := point[0] / 3 * 3
+	y := point[1] / 3 * 3
+	for key, _ := range sudo.value[x : x+3] {
+		for i := y; i < y+3; i++ {
+			if sudo.value[key][i] == 0 {
+				sudo.Screen(key*3+i, [2]int{key, i}, val)
 			}
 		}
+	}
+}
+
+func (sudo *Sudo) Screen(key int, point [2]int, block int) {
+	list := sudo.screen[key]
+	for k, col := range list {
+		if block == col {
+			sudo.screen[key] = append(list[:k], list[k+1:]...)
+		}
+	}
+	if len(sudo.screen[key]) == 1 {
+		sudo.new_points.PushFront(point)
+		sudo.value[point[0]][point[1]] = sudo.screen[key][0]
 	}
 }
 
@@ -93,6 +114,7 @@ func main() {
 	data := New()
 	// data.Calc()
 	// fmt.Println(append(data.screen[0][:3], data.screen[0][3+2:]...))
-	fmt.Println(data.new_points.Front().Value)
+	// fmt.Println(data.new_points.Front().Value)
 	data.CutNum([2]int{0, 7})
+	fmt.Println(data.screen)
 }
