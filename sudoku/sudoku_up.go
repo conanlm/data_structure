@@ -116,11 +116,102 @@ func (sudo *Sudo) CheckSameNum() {
 	}
 }
 
+//得到确定的数字
+func (sudo *Sudo) GetCount() int {
+	sum := 0
+	for i := 0; i < 81; i++ {
+		if sudo.value[i/9][i%9] != 0 {
+			sum++
+		}
+	}
+	return sum
+}
+
+//评分，找到最佳的猜测坐标
+func (sudo *Sudo) GetBestPoint() [2]int {
+	bestScore := 0
+	bestPoint := [2]int{0, 0}
+	for row, _ := range sudo.value {
+		for col, _ := range sudo.value[row] {
+			pointScore := sudo.getPointScore([2]int{row, col})
+			if bestScore < pointScore {
+				bestScore = pointScore
+				bestPoint = [2]int{row, col}
+			}
+		}
+	}
+	return bestPoint
+}
+
+//计算某坐标的评分
+func (sudo *Sudo) getPointScore(point [2]int) int {
+	if sudo.value[point[0]][point[1]] == 0 {
+		score := 10 - len(sudo.screen[point[0]*9+point[1]])
+		for _, val := range sudo.value[point[0]] {
+			if val > 0 {
+				score++
+			}
+		}
+		for i := 0; i < 9; i++ {
+			if sudo.value[i][point[1]] > 0 {
+				score++
+			}
+		}
+		return score
+	}
+	return 0
+}
+
+func (sudo *Sudo) CheckValue() bool {
+	for row, _ := range sudo.value {
+		nums := make([]int, 0)
+		lists := make([][]int, 0)
+		for col, val := range sudo.value[row] {
+			if val == 0 {
+				lists = append(lists, sudo.screen[row*9+col])
+			} else {
+				nums = append(nums, val)
+			}
+		}
+		if len(removeDuplicates(nums)) != len(nums) {
+			return false
+		}
+		for _, val := range lists {
+			if len(val) == 0 {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+func removeDuplicates(elements []int) []int {
+	// Use map to record duplicates as we find them.
+	encountered := map[int]bool{}
+	result := []int{}
+
+	for v := range elements {
+		if encountered[elements[v]] == true {
+			// Do not add duplicate.
+		} else {
+			// Record this element as an encountered element.
+			encountered[elements[v]] = true
+			// Append to result slice.
+			result = append(result, elements[v])
+		}
+	}
+	// Return the new slice.
+	return result
+}
+
 func main() {
 	data := New()
 	// data.Calc()
 	// fmt.Println(append(data.screen[0][:3], data.screen[0][3+2:]...))
 	// fmt.Println(data.new_points.Front().Value)
 	// data.CutNum([2]int{0, 7})
-	data.CheckSameNum()
+	// data.CheckSameNum()
+	data.CheckValue()
+	fmt.Println("")
 }
