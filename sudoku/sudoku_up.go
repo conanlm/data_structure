@@ -92,7 +92,7 @@ func (sudo *Sudo) CutNum(point [2]int) {
 	for key, _ := range sudo.value[x : x+3] {
 		for i := y; i < y+3; i++ {
 			if sudo.value[key][i] == 0 {
-				sudo.Screen(key*3+i, [2]int{key, i}, val)
+				sudo.Screen(key*9+i, [2]int{key, i}, val)
 			}
 		}
 	}
@@ -128,9 +128,38 @@ func (sudo *Sudo) CheckOnePossbile() bool {
 		}
 	}
 
-	for c :=range [9]int{0:9}{
-		for r,item :=range sudo.value[:][c]{
-			
+	for c := range [9]int{0: 9} {
+		for r, item := range sudo.value[:][c] {
+			if sudo.value[r][c] != 0 {
+				continue
+			}
+			for _, val := range sudo.screen[r*9+c] {
+				sum := sudo.ergodic(sudo.value[r], c, val)
+				if sum == 1 {
+					sudo.value[r][c] = val
+					sudo.new_points.PushFront([2]int{r, c})
+					return true
+				}
+			}
+		}
+	}
+
+	for _, val := range sudo.base_points {
+		for key, _ := range sudo.value[val[0] : val[0]+3] {
+			for i := val[1]; i < val[1]+3; i++ {
+				if sudo.value[key][i] != 0 {
+					continue
+				}
+
+				for _, v := range sudo.screen[key*9+i] {
+					sum := sudo.ergodic(sudo.value[key], key, v)
+					if sum == 1 {
+						sudo.value[key][i] = v
+						sudo.new_points.PushFront([2]int{key, i})
+						return true
+					}
+				}
+			}
 		}
 	}
 	return false
@@ -153,14 +182,34 @@ func (sudo *Sudo) ergodic(list [9]int, row int, search int) int {
 
 func (sudo *Sudo) CheckSameNum() {
 	for _, val := range sudo.base_points {
-		for key, _ := range sudo.value[val[0] : val[0]+3] {
-			for i := val[1]; i < val[1]+3; i++ {
-				if sudo.value[key][i] == 0 {
+		for i := 1; i < 10; i++ {
+			var result []int
+			for key, _ := range sudo.value[val[0] : val[0]+3] {
+				for j := val[1]; j < val[1]+3; j++ {
+					if sudo.value[key][i] != 0 {
+						continue
+					}
+					if blockKey := sudo.temp(key*9+i, i); blockKey > 0 {
+						result = append(result, blockKey)
+					}
+				}
+
+				if rCount := len(result); rCount == 2 || rCount == 3 {
 
 				}
 			}
+
 		}
 	}
+}
+
+func (sudo *Sudo) temp(key int, search int) int {
+	for key, val := range sudo.screen[key] {
+		if val == search {
+			return key + 1
+		}
+	}
+	return 0
 }
 
 //得到确定的数字
