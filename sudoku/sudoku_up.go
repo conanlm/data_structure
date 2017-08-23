@@ -19,6 +19,7 @@ type Sudo struct {
 	recoder     *list.List
 	base_points [9][2]int
 	screen      map[int][]int
+	dine        [9][9]interface{}
 }
 
 func New() *Sudo {
@@ -33,21 +34,24 @@ func New() *Sudo {
 		{0, 0, 0, 0, 0, 5, 0, 9, 0},
 		{0, 1, 0, 0, 7, 0, 0, 0, 0},
 	}
+	var test [9][9]interface{}
 	new_points := list.New()
 	recoder := list.New()
 	screen := make(map[int][]int, 0)
 	for i := 0; i < 81; i++ {
 		if sudoArr[i/9][i%9] != 0 {
+			test[i/9][i%9] = sudoArr[i/9][i%9]
 			new_points.PushBack([2]int{i / 9, i % 9})
 		} else {
 			screen[i] = []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+			test[i/9][i%9] = []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
 		}
 	}
 	base_points := [9][2]int{
 		{0, 0}, {0, 3}, {0, 6}, {3, 0}, {3, 3}, {3, 6}, {6, 0}, {6, 3}, {6, 6},
 	}
 	return &Sudo{value: sudoArr, base_points: base_points, guess_times: 0,
-		new_points: new_points, recoder: recoder, screen: screen}
+		new_points: new_points, recoder: recoder, screen: screen, dine: test}
 }
 
 func (sudo *Sudo) Calc() {
@@ -129,7 +133,7 @@ func (sudo *Sudo) CheckOnePossbile() bool {
 	}
 
 	for c := range [9]int{0: 9} {
-		for r, item := range sudo.value[:][c] {
+		for r, _ := range sudo.value[:][c] {
 			if sudo.value[r][c] != 0 {
 				continue
 			}
@@ -382,5 +386,6 @@ func main() {
 	// data.CheckSameNum()
 	// data.CheckValue()
 	data.CheckOnePossbile()
+	fmt.Println(data.dine)
 	fmt.Println("")
 }
