@@ -113,13 +113,42 @@ func (sudo *Sudo) Screen(key int, point [2]int, block int) {
 
 func (sudo *Sudo) CheckOnePossbile() bool {
 	for r := range [9]int{0: 9} {
-		for k, c := range sudo.value[r] {
-			if sudo.value[r][k] == 0 {
-
+		for k, _ := range sudo.value[r] {
+			if sudo.value[r][k] != 0 {
+				continue
+			}
+			for _, val := range sudo.screen[r*9+k] {
+				sum := sudo.ergodic(sudo.value[r], r, val)
+				if sum == 1 {
+					sudo.value[r][k] = val
+					sudo.new_points.PushFront([2]int{r, k})
+					return true
+				}
 			}
 		}
 	}
-	return true
+
+	for c :=range [9]int{0:9}{
+		for r,item :=range sudo.value[:][c]{
+			
+		}
+	}
+	return false
+}
+
+func (sudo *Sudo) ergodic(list [9]int, row int, search int) int {
+	sum := 0
+	for key, col := range list {
+		if col == 0 {
+			continue
+		}
+		for _, val := range sudo.screen[row*9+key] {
+			if search == val {
+				sum++
+			}
+		}
+	}
+	return sum
 }
 
 func (sudo *Sudo) CheckSameNum() {
@@ -283,21 +312,15 @@ func isRetBol(nums []int, lists [][]int) bool {
 }
 
 func removeDuplicates(elements []int) []int {
-	// Use map to record duplicates as we find them.
 	encountered := map[int]bool{}
 	result := []int{}
 
 	for v := range elements {
-		if encountered[elements[v]] == true {
-			// Do not add duplicate.
-		} else {
-			// Record this element as an encountered element.
+		if encountered[elements[v]] != true {
 			encountered[elements[v]] = true
-			// Append to result slice.
 			result = append(result, elements[v])
 		}
 	}
-	// Return the new slice.
 	return result
 }
 
@@ -308,6 +331,7 @@ func main() {
 	// fmt.Println(data.new_points.Front().Value)
 	// data.CutNum([2]int{0, 7})
 	// data.CheckSameNum()
-	data.CheckValue()
+	// data.CheckValue()
+	data.CheckOnePossbile()
 	fmt.Println("")
 }
