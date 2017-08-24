@@ -3,6 +3,7 @@ package main
 import (
 	"container/list"
 	"fmt"
+	"github.com/mohae/deepcopy"
 	"os"
 )
 
@@ -55,14 +56,14 @@ func New() *Sudo {
 
 func (sudo *Sudo) Calc() {
 	sudo.SolveSudo()
-	for{
-		if sudo.CheckValue(){
-			if sudo.GetCount()==81{
+	for {
+		if sudo.CheckValue() {
+			if sudo.GetCount() == 81 {
 				break
 			}
-			point:=sudo.GetBestPoint()
+			point := sudo.GetBestPoint()
 			sudo.RecodeGuess(point, 0)
-		}else{
+		} else {
 			sudo.Reback()
 		}
 	}
@@ -71,13 +72,16 @@ func (sudo *Sudo) Calc() {
 func (sudo *Sudo) SolveSudo() {
 	isRunSame := true
 	isRunOne := true
-	var point [2]int
 	for isRunSame {
 		for isRunOne {
 			for sudo.new_points.Len() > 0 {
-				point = sudo.new_points.Front().Value.([2]int)
-				sudo.CutNum(point)
+				e := sudo.new_points.Front()
+				sudo.new_points.Remove(e)
+				sudo.CutNum(e.Value.([2]int))
+				fmt.Println(sudo.new_points.Len())
+				fmt.Println(sudo.sudokuList[0])
 			}
+			os.Exit(1)
 			isRunOne = sudo.CheckOnePossbile()
 		}
 		isRunSame = sudo.CheckSameNum()
@@ -88,8 +92,13 @@ func (sudo *Sudo) SolveSudo() {
 func (sudo *Sudo) CutNum(point [2]int) {
 	val := sudo.sudokuList[point[0]][point[1]].(int)
 	//行排除
-	for range sudo.sudokuList[point[0]] {
-		sudo.replace(point[0], point[1], val)
+	for row, item := range sudo.sudokuList[point[0]] {
+		if _, ok := item.([]int); !ok {
+			continue
+		}
+		for col, _ := range item.([]int) {
+			sudo.replace(row, col, val)
+		}
 	}
 
 	//列排除
@@ -131,7 +140,7 @@ func (sudo *Sudo) CheckOnePossbile() bool {
 				continue
 			}
 			for _, val := range sudo.sudokuList[r][k].([]int) {
-				sum := sudo.ergodic(sudo.sudokuList[r][k].([9]int), r, val)
+				sum := sudo.ergodic(sudo.sudokuList[r][k].([]int), r, val)
 				if sum == 1 {
 					sudo.sudokuList[r][k] = val
 					sudo.new_points.PushFront([2]int{r, k})
@@ -147,7 +156,7 @@ func (sudo *Sudo) CheckOnePossbile() bool {
 				continue
 			}
 			for _, val := range sudo.sudokuList[r][c].([]int) {
-				sum := sudo.ergodic(sudo.sudokuList[r][c].([9]int), r, val)
+				sum := sudo.ergodic(sudo.sudokuList[r][c].([]int), r, val)
 				if sum == 1 {
 					sudo.sudokuList[r][c] = val
 					sudo.new_points.PushFront([2]int{r, c})
@@ -165,7 +174,7 @@ func (sudo *Sudo) CheckOnePossbile() bool {
 				}
 
 				for _, v := range sudo.sudokuList[key][i].([]int) {
-					sum := sudo.ergodic(sudo.sudokuList[key][i].([9]int), key, v)
+					sum := sudo.ergodic(sudo.sudokuList[key][i].([]int), key, v)
 					if sum == 1 {
 						sudo.value[key][i] = v
 						sudo.new_points.PushFront([2]int{key, i})
@@ -178,10 +187,10 @@ func (sudo *Sudo) CheckOnePossbile() bool {
 	return false
 }
 
-func (sudo *Sudo) ergodic(list [9]int, row int, search int) int {
+func (sudo *Sudo) ergodic(list []int, row int, search int) int {
 	sum := 0
-	for key, col := range list {
-		if col == 0 {
+	for key, _ := range list {
+		if _, ok := sudo.sudokuList[row][key].([]int); !ok {
 			continue
 		}
 		for _, val := range sudo.sudokuList[row][key].([]int) {
@@ -199,7 +208,7 @@ func (sudo *Sudo) CheckSameNum() bool {
 			result := make([]int, 0)
 			for key, _ := range sudo.sudokuList[val[0] : val[0]+3] {
 				for j := val[1]; j < val[1]+3; j++ {
-					if _, ok := sudo.sudokuList[key][i].([]int); !ok {
+					if _, ok := sudo.sudokuList[key][j].([]int); !ok {
 						continue
 					}
 					if blockKey := In(i, sudo.sudokuList[key][j].([]int)); blockKey > -1 {
@@ -250,21 +259,27 @@ func (sudo *Sudo) CheckSameNum() bool {
 }
 
 func (sudo *Sudo) replace(row int, col int, search int) bool {
-	if _,ok:=sudo.sudokuList[row][col].([]int);!ok{
+	if _, ok := sudo.sudokuList[row][col].([]int); !ok {
 		return false
 	}
 	key := In(search, sudo.sudokuList[row][col].([]int))
 	if key == -1 {
 		return false
 	}
-	temp := sudo.sudokuList[row][col].([]int)
+	temp := deepcopy.Copy(sudo.sudokuList[row][col].([]int)).([]int)
 	temp = append(temp[:key], temp[key+1:]...)
+	sudo.sudokuList[row][col] = temp
 	if len(temp) == 1 {
-		sudo.new_points.PushFront([2]int{row, col})
+		// sudo.new_points.PushFront([2]int{row, col})
 		sudo.sudokuList[row][col] = temp[0]
 		return true
 	}
 	return false
+}
+
+func remove(s []int, i int) []int {
+	s[len(s)-1], s[i] = s[i], s[len(s)-1]
+	return s[:len(s)-1]
 }
 
 //得到确定的数字
@@ -300,8 +315,8 @@ func (sudo *Sudo) getPointScore(row int, col int) int {
 		return 0
 	}
 	score := 10 - len(sudo.sudokuList[row][col].([]int))
-	for _, val := range sudo.sudokuList[row]{
-		if _,ok:=val.(int);ok {
+	for _, val := range sudo.sudokuList[row] {
+		if _, ok := val.(int); ok {
 			score++
 		}
 	}
@@ -319,7 +334,7 @@ func (sudo *Sudo) CheckValue() bool {
 		nums := make([]int, 0)
 		lists := make([][]int, 0)
 		for _, val := range sudo.sudokuList[row] {
-			if list,ok:=val.([]int);ok{
+			if list, ok := val.([]int); ok {
 				lists = append(lists, list)
 			} else {
 				nums = append(nums, val.(int))
@@ -334,7 +349,7 @@ func (sudo *Sudo) CheckValue() bool {
 		nums := make([]int, 0)
 		lists := make([][]int, 0)
 		for j := 0; j < 9; j++ {
-			if list,ok:=sudo.sudokuList[j][i].([]int);ok{
+			if list, ok := sudo.sudokuList[j][i].([]int); ok {
 				lists = append(lists, list)
 			} else {
 				nums = append(nums, sudo.sudokuList[j][i].(int))
@@ -350,7 +365,7 @@ func (sudo *Sudo) CheckValue() bool {
 			nums := make([]int, 0)
 			lists := make([][]int, 0)
 			for i := val[1]; i < val[1]+3; i++ {
-				if list,ok:=sudo.sudokuList[key][i].([]int); ok{
+				if list, ok := sudo.sudokuList[key][i].([]int); ok {
 					lists = append(lists, list)
 				} else {
 					nums = append(nums, sudo.sudokuList[key][i].(int))
@@ -390,7 +405,9 @@ func (sudo *Sudo) Reback() {
 			fmt.Println("sudo is wrong")
 			os.Exit(0)
 		} else {
-			recoder = sudo.recoder.Back().Value.(Recoder)
+			e := sudo.recoder.Back()
+			sudo.recoder.Remove(e)
+			recoder = e.Value.(Recoder)
 			point = recoder.point
 			index = recoder.pointIndex + 1
 			item := recoder.sudokuList[point[0]][point[1]].([]int)
