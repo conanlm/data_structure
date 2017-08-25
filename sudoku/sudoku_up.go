@@ -77,9 +77,13 @@ func (sudo *Sudo) SolveSudo() {
 			for sudo.new_points.Len() > 0 {
 				e := sudo.new_points.Front()
 				sudo.new_points.Remove(e)
+				if sudo.new_points.Len()==9{
+					fmt.Println(sudo.sudokuList[0])
+				}
 				sudo.CutNum(e.Value.([2]int))
-				fmt.Println(sudo.new_points.Len())
-				fmt.Println(sudo.sudokuList[0])
+				if sudo.new_points.Len()==9{
+					fmt.Println(sudo.sudokuList[0])
+				}
 			}
 			os.Exit(1)
 			isRunOne = sudo.CheckOnePossbile()
@@ -90,31 +94,71 @@ func (sudo *Sudo) SolveSudo() {
 }
 
 func (sudo *Sudo) CutNum(point [2]int) {
-	val := sudo.sudokuList[point[0]][point[1]].(int)
+	val,err:= sudo.sudokuList[point[0]][point[1]].(int)
+	if !err{
+		return
+	}
+	if sudo.new_points.Len()==9{
+		fmt.Println("")
+	}
 	//行排除
-	for row, item := range sudo.sudokuList[point[0]] {
-		if _, ok := item.([]int); !ok {
+	for col:= range [9]int{0:9} {
+		item,ok:= sudo.sudokuList[point[0]][col].([]int)
+		if !ok {
 			continue
 		}
-		for col, _ := range item.([]int) {
-			sudo.replace(row, col, val)
+		key:=In(val, item)
+		if key==-1{
+			continue
+		}
+		if sudo.new_points.Len()==9{
+			fmt.Println(point[0],col)
+			fmt.Println(sudo.sudokuList[0])
+		}
+		temp:=CopySlice(item, key)
+		sudo.sudokuList[point[0]][col]=temp
+		if len(temp)==1{
+			sudo.new_points.PushFront([2]int{point[0],col})
+			sudo.sudokuList[point[0]][col]=temp[0]
 		}
 	}
 
+
 	//列排除
-	for i := 0; i < 9; i++ {
-		if _, ok := sudo.sudokuList[i][point[1]].([]int); ok {
-			sudo.replace(i, point[1], val)
+	for row:=range [9]int{0:9}{
+		item,ok:=sudo.sudokuList[row][point[1]].([]int)
+		if !ok {
+			continue
+		}
+		key:=In(val, item)
+		if key==-1{
+			continue
+		}
+		temp:=CopySlice(item, key)
+		sudo.sudokuList[row][point[1]]=temp
+		if len(temp)==1{
+			sudo.new_points.PushFront([2]int{row,point[1]})
+			sudo.sudokuList[row][point[1]]=temp[0]
 		}
 	}
 
 	//九宫格排除
 	x := point[0] / 3 * 3
 	y := point[1] / 3 * 3
-	for key, _ := range sudo.sudokuList[x : x+3] {
-		for i := y; i < y+3; i++ {
-			if _, ok := sudo.sudokuList[key][i].([]int); ok {
-				sudo.replace(key, i, val)
+	for row, _ := range sudo.sudokuList[x : x+3] {
+		for col := y; col < y+3; col++ {
+			if _, ok := sudo.sudokuList[row][col].([]int); !ok {
+				continue
+			}
+			key:=In(val, sudo.sudokuList[row][col].([]int))
+			if key==-1{
+				continue
+			}
+			temp:=CopySlice(sudo.sudokuList[row][col].([]int), key)
+			sudo.sudokuList[row][col]=temp
+			if len(temp)==1{
+				sudo.new_points.PushFront([2]int{row,col})
+				sudo.sudokuList[row][col]=temp[0]
 			}
 		}
 	}
@@ -460,6 +504,19 @@ func In(search int, value []int) int {
 		}
 	}
 	return -1
+}
+
+func CopySlice(arr []int, key int)[]int{
+	list:=make([]int, len(arr)-1)
+	i:=0
+	for k,val:=range arr{
+		if k==key{
+			continue
+		}
+		list[i]=val
+		i++
+	}
+	return list
 }
 
 func main() {
