@@ -3,6 +3,7 @@ package main
 import (
 	"container/list"
 	"fmt"
+	"github.com/mohae/deepcopy"
 	"os"
 )
 
@@ -409,7 +410,11 @@ func (sudo *Sudo) recodeGuess(point [2]int, index int) {
 	var recoder Recoder
 	recoder.point = point
 	recoder.pointIndex = index
-	recoder.sudokuList = sudo.sudokuList
+
+	recoder.sudokuList = deepcopy.Copy(sudo.sudokuList).([9][9]interface{})
+	if point[0] == 5 && point[1] == 6 {
+		fmt.Println(sudo.sudokuList[0])
+	}
 	sudo.recoder.PushFront(recoder)
 	sudo.guess_times++
 
@@ -420,7 +425,7 @@ func (sudo *Sudo) recodeGuess(point [2]int, index int) {
 	sudo.solveSudo()
 }
 
-//回溯，需要先进先出
+//回溯，需要先进后出
 func (sudo *Sudo) reback() {
 	var index int
 	var point [2]int
@@ -430,7 +435,7 @@ func (sudo *Sudo) reback() {
 			fmt.Println("sudo is wrong")
 			os.Exit(1)
 		} else {
-			e := sudo.recoder.Back()
+			e := sudo.recoder.Front()
 			sudo.recoder.Remove(e)
 			recoder = e.Value.(Recoder)
 			point = recoder.point
@@ -510,9 +515,20 @@ func main() {
 		{0, 0, 0, 0, 0, 5, 0, 9, 0},
 		{0, 1, 0, 0, 7, 0, 0, 0, 0},
 	}
+	// sudoArr := [9][9]int{
+	// 	{8, 0, 0, 0, 0, 0, 0, 0, 0},
+	// 	{0, 0, 3, 6, 0, 0, 0, 0, 0},
+	// 	{0, 7, 0, 0, 9, 0, 2, 0, 0},
+	// 	{0, 5, 0, 0, 0, 7, 0, 0, 0},
+	// 	{0, 0, 0, 0, 4, 5, 7, 0, 0},
+	// 	{0, 0, 0, 1, 0, 0, 0, 3, 0},
+	// 	{0, 0, 1, 0, 0, 0, 0, 6, 8},
+	// 	{0, 0, 8, 5, 0, 0, 0, 1, 0},
+	// 	{0, 9, 0, 0, 0, 0, 4, 0, 0},
+	// }
 	data := New(sudoArr)
 	data.Calc()
-	// fmt.Printf("完成，猜测了%d次\n", data.guess_times)
+	fmt.Printf("完成，猜测了%d次\n", data.guess_times)
 	for _, item := range data.sudokuList {
 		fmt.Println(item)
 	}

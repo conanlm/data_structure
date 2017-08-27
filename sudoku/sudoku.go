@@ -42,10 +42,7 @@ var Sudoku = [9][9]int{
 // }
 
 func main() {
-	fmt.Println("未填充数独：")
-	Output(Sudoku)
 	DFS(0)
-	fmt.Println("填充后的数独:")
 	Output(Sudoku)
 }
 
