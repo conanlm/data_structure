@@ -412,7 +412,7 @@ func (sudo *Sudo) recodeGuess(point [2]int, index int) {
 	recoder.pointIndex = index
 
 	recoder.sudokuList = deepcopy.Copy(sudo.sudokuList).([9][9]interface{})
-	sudo.recoder.PushFront(recoder)
+	sudo.recoder.PushBack(recoder)
 	sudo.guess_times++
 
 	//新一轮的排除处理
@@ -431,7 +431,7 @@ func (sudo *Sudo) reback() {
 			fmt.Println("sudo is wrong")
 			os.Exit(1)
 		} else {
-			e := sudo.recoder.Front()
+			e := sudo.recoder.Back()
 			sudo.recoder.Remove(e)
 			recoder = e.Value.(Recoder)
 			point = recoder.point
